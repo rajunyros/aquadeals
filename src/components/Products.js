@@ -5,15 +5,38 @@ import { Carousel } from "antd";
 export const Products = () => {
   const [allproducts, setallProducts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [wcount, setWcount] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products")
+    if (localStorage.getItem("wishlist")) {
+      const w_count = JSON.parse(localStorage.getItem("wishlist")).length;
+      setWcount(w_count);
+    }
+
+    
+    // fetch("https://fakestoreapi.com/products")
+    //   .then((res) => res.json())
+    //   .then((json) => {
+    //     setProducts(json);
+    //     setallProducts(json);
+    //   });
+
+
+
+     fetch("https://62b9503141bf319d22798e67.mockapi.io/products",{
+  mode: 'cors',
+  headers: {
+    'Access-Control-Allow-Origin':'*'
+  }}
+  )
       .then((res) => res.json())
       .then((json) => {
-        setProducts(json);
-        setallProducts(json);
+        console.log("Shopify",json[0].products)
+         setProducts(json[0].products);
+        setallProducts(json[0].products);
       });
+
   }, []);
 
   const productSearch = (event) => {
@@ -29,36 +52,67 @@ export const Products = () => {
   };
 
   const addToCart = (product) => {
-    console.log("sssssssss",product)
-
     let products = [];
-    if(localStorage.getItem('products')){
-        products = JSON.parse(localStorage.getItem('products'));
+    if (localStorage.getItem("cart")) {
+      products = JSON.parse(localStorage.getItem("cart"));
     }
-    products.push({'id': product.id,'image': product.image,'price': product.price,'title': product.title});
-    localStorage.setItem('products', JSON.stringify(products));
 
-    // alert("hii")
-    navigate({ pathname: "/cart/" })
-    
-  }
+    const ProductExist = products.find((item) => item.id === product.id);
+
+    if (ProductExist) {
+      ProductExist.quantity += 1;
+    } else {
+      products.push({
+        id: product.id,
+        image: product.images[0].src,
+        price: product.variants[0].price,
+        title: product.title,
+        quantity: 1,
+      });
+    }
+
+    localStorage.setItem("cart", JSON.stringify(products));
+    navigate({ pathname: "/cart/" });
+  };
+
+  const addToWList = (product) => {
+    let products = [];
+    if (localStorage.getItem("wishlist")) {
+      products = JSON.parse(localStorage.getItem("wishlist"));
+    }
+
+    const ProductExist = products.find((item) => item.id === product.id);
+
+    if (!ProductExist) {
+      products.push({
+        id: product.id,
+        image: product.images[0].src,
+        price: product.variants[0].price,
+        title: product.title,
+        quantity: 1,
+      });
+    }
+    // else {
+
+    // }
+
+    localStorage.setItem("wishlist", JSON.stringify(products));
+    navigate({ pathname: "/wishlist/" });
+  };
 
   const list_products = products.map((p, index) => {
     return (
-      <div
-        key={index}
-        
-      >
+      <div key={index}>
         {/*<!-- COMPONENT: PRODUCT CARD -->*/}
         <article class="shadow-sm rounded bg-white border border-gray-200">
-            <img
-              src={p.image}
-              class="mx-auto w-auto h-64"
-              alt="Product title here"
-              onClick={() => navigate({ pathname: "/products/" + p.id })}
-            />
+          <img
+            src={p.images[0].src}
+            class="mx-auto w-auto h-64"
+            alt="Product title here"
+            onClick={() => navigate({ pathname: "/products/" + p.id })}
+          />
           <div class="p-4 border-t border-t-gray-200">
-            <p class="font-semibold">&#8377; {p.price}</p>
+            <p class="font-semibold">&#8377; {p.variants[0].price}</p>
             <a
               href="#"
               class="block text-gray-600 mb-3 hover:text-blue-500 truncate"
@@ -66,18 +120,18 @@ export const Products = () => {
               {p.title}
             </a>
             <div class="flex space-x-5">
-              <div
-                              onClick={() => addToCart(p)}
-                class="px-4 py-2 inline-block text-white text-center bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+              <span
+                onClick={() => addToCart(p)}
+                class="cursor-pointer  px-4 py-2 inline-block text-white text-center bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
               >
                 Add to cart
-              </div>
-              <a
-                class="px-3 py-2 inline-block text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-                href="#"
+              </span>
+              <span
+                onClick={() => addToWList(p)}
+                class="cursor-pointer px-3 py-2 inline-block text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
               >
                 <i class="fa fa-heart"></i>
-              </a>
+              </span>
             </div>
           </div>
         </article>
@@ -94,7 +148,7 @@ export const Products = () => {
           <div class="flex flex-wrap items-center">
             {/*<!-- Brand -->*/}
             <div class="flex-shrink-0 mr-5">
-              <a href="#">
+              <a href="/">
                 {" "}
                 <img src="images/logo.svg" height="38" alt="Brand" />{" "}
               </a>
@@ -132,10 +186,15 @@ export const Products = () => {
 
               <a
                 class="px-3 py-2 inline-block text-center text-gray-700 bg-white shadow-sm border border-gray-200 rounded-md hover:bg-gray-100 hover:border-gray-300"
-                href="#"
+                href="\wishlist"
               >
                 <i class="text-gray-400 w-5 fa fa-heart"></i>
-                <span class="hidden lg:inline ml-1">Wishlist</span>
+                <span class="block relative hidden lg:inline ml-1">
+
+                  Wishlist{wcount != 0 ? wcount : null}
+                </span>
+
+
               </a>
 
               <a
@@ -241,72 +300,6 @@ export const Products = () => {
           </div>
         </div>
       </section>
-
-      {/* <div id="carouselExampleIndicators" class="carousel slide relative" data-bs-ride="carousel">
-						  <div class="carousel-indicators absolute right-0 bottom-0 left-0 flex justify-center p-0 mb-4">
-						    <button
-						      type="button"
-						      data-bs-target="#carouselExampleIndicators"
-						      data-bs-slide-to="0"
-						      class="active"
-						      aria-current="true"
-						      aria-label="Slide 1"
-						    ></button>
-						    <button
-						      type="button"
-						      data-bs-target="#carouselExampleIndicators"
-						      data-bs-slide-to="1"
-						      aria-label="Slide 2"
-						    ></button>
-						    <button
-						      type="button"
-						      data-bs-target="#carouselExampleIndicators"
-						      data-bs-slide-to="2"
-						      aria-label="Slide 3"
-						    ></button>
-						  </div>
-						  <div class="carousel-inner relative w-full overflow-hidden">
-						    <div class="carousel-item active float-left w-full">
-						      <img
-						        src="https://mdbcdn.b-cdn.net/img/new/slides/041.webp"
-						        class="block w-full"
-						        alt="Wild Landscape"
-						      />
-						    </div>
-						    <div class="carousel-item float-left w-full">
-						      <img
-						        src="https://mdbcdn.b-cdn.net/img/new/slides/042.webp"
-						        class="block w-full"
-						        alt="Camera"
-						      />
-						    </div>
-						    <div class="carousel-item float-left w-full">
-						      <img
-						        src="https://mdbcdn.b-cdn.net/img/new/slides/043.webp"
-						        class="block w-full"
-						        alt="Exotic Fruits"
-						      />
-						    </div>
-						  </div>
-						  <button
-						    class="carousel-control-prev absolute top-0 bottom-0 flex items-center justify-center p-0 text-center border-0 hover:outline-none hover:no-underline focus:outline-none focus:no-underline left-0"
-						    type="button"
-						    data-bs-target="#carouselExampleIndicators"
-						    data-bs-slide="prev"
-						  >
-						    <span class="carousel-control-prev-icon inline-block bg-no-repeat" aria-hidden="true"></span>
-						    <span class="visually-hidden">Previous</span>
-						  </button>
-						  <button
-						    class="carousel-control-next absolute top-0 bottom-0 flex items-center justify-center p-0 text-center border-0 hover:outline-none hover:no-underline focus:outline-none focus:no-underline right-0"
-						    type="button"
-						    data-bs-target="#carouselExampleIndicators"
-						    data-bs-slide="next"
-						  >
-						    <span class="carousel-control-next-icon inline-block bg-no-repeat" aria-hidden="true"></span>
-						    <span class="visually-hidden">Next</span>
-						  </button>
-						</div>*/}
     </div>
   );
 };

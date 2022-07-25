@@ -2,99 +2,95 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
-
-export const Cart = () => {
-  const [cartItems, setCartItems] = useState([]);
-  const [wcount, setWcount] = useState(null);
+export const Wishlist = () => {
   const navigate = useNavigate();
 
+  const [wishListItems, setwishListItems] = useState([]);
+  const [wcount, setWcount] = useState(null);
 
   useEffect(() => {
     if (localStorage.getItem("wishlist")) {
+      const wishlist = JSON.parse(localStorage.getItem("wishlist"));
       const w_count = JSON.parse(localStorage.getItem("wishlist")).length;
       setWcount(w_count);
-    }
-
-    if (localStorage.getItem("cart")) {
-      const cart = JSON.parse(localStorage.getItem("cart"));
-      setCartItems(cart);
+      setwishListItems(wishlist);
     }
   }, []);
 
   const removeProduct = (_product) => {
     let productId = _product.id;
-    let storageProducts = JSON.parse(localStorage.getItem("cart"));
+    let storageProducts = JSON.parse(localStorage.getItem("wishlist"));
     let products = storageProducts.filter(
       (product) => product.id !== productId
     );
-    localStorage.setItem("cart", JSON.stringify(products));
-    const cart = JSON.parse(localStorage.getItem("cart"));
-    setCartItems(cart);
+    localStorage.setItem("wishlist", JSON.stringify(products));
+    const wishlist = JSON.parse(localStorage.getItem("wishlist"));
+    setwishListItems(wishlist);
+    const w_count = JSON.parse(localStorage.getItem("wishlist")).length;
+    setWcount(w_count);
   };
 
-  const totalPrice = () => {
-    const countTotal = (items) =>
-      items.reduce((acc, curr) => acc + curr.quantity * curr.price, 0);
-    console.log(countTotal(cartItems));
-  };
-
-  const incrementCount = (item, index) => {
-    const items = [...cartItems];
-    item.quantity += 1;
-    items.splice(index, 1, item);
-    localStorage.setItem("cart", JSON.stringify(items));
-    setCartItems(items);
-    console.log("cartItems", cartItems);
-  };
-
-  const decrementCount = (item, index) => {
-    const items = [...cartItems];
-    if (item.quantity > 1) {
-      item.quantity -= 1;
-      items.splice(index, 1, item);
-      localStorage.setItem("cart", JSON.stringify(items));
-      setCartItems(items);
-      console.log("cartItems", cartItems);
-    }
-  };
-
-   const addToWList = (product) => {
-
-      let productId = product.id;
-    let storageProducts = JSON.parse(localStorage.getItem("cart"));
-    let products1 = storageProducts.filter(
-      (product) => product.id !== productId
-    );
-    localStorage.setItem("cart", JSON.stringify(products1));
-
-
-
+  const addToCart = (_product) => {
     let products = [];
-    if (localStorage.getItem("wishlist")) {
-      products = JSON.parse(localStorage.getItem("wishlist"));
+    if (localStorage.getItem("cart")) {
+      products = JSON.parse(localStorage.getItem("cart"));
     }
 
-    const ProductExist = products.find((item) => item.id === product.id);
+    const ProductExist = products.find((item) => item.id === _product.id);
 
-    if (!ProductExist) {
+    if (ProductExist) {
+      ProductExist.quantity += 1;
+    } else {
       products.push({
-        id: product.id,
-        image: product.image,
-        price: product.price,
-        title: product.title,
+        id: _product.id,
+        image: _product.image,
+        price: _product.price,
+        title: _product.title,
         quantity: 1,
       });
     }
-    // else {
 
-    // }
+    localStorage.setItem("cart", JSON.stringify(products));
 
-    localStorage.setItem("wishlist", JSON.stringify(products));
-    navigate({ pathname: "/wishlist/" });
+    let productId = _product.id;
+    let storageProducts = JSON.parse(localStorage.getItem("wishlist"));
+    let products1 = storageProducts.filter(
+      (product) => product.id !== productId
+    );
+    localStorage.setItem("wishlist", JSON.stringify(products1));
+    const wishlist = JSON.parse(localStorage.getItem("wishlist"));
+    setwishListItems(wishlist);
+
+    navigate({ pathname: "/cart/" });
   };
 
+  // const totalPrice = () => {
+  //   const countTotal = (items) => items.reduce((acc, curr) => acc + curr.quantity * curr.price, 0);
+  //   console.log(countTotal(wishListItems));
+  // };
 
-  const list_products = cartItems.map((p, index) => {
+  // const incrementCount = (item,index) => {
+  //   const items = [...wishListItems];
+  //   item.quantity += 1;
+  //   items.splice(index,1,item);
+  //   localStorage.setItem('products', JSON.stringify(items));
+  //   setwishListItems(items)
+  //   console.log("wishListItems", wishListItems)
+  // }
+
+  // const decrementCount = (item,index) => {
+  //   const items = [...wishListItems];
+  //     if(item.quantity>1){
+  //       item.quantity -= 1;
+  //       items.splice(index,1,item);
+  //       localStorage.setItem('products', JSON.stringify(items));
+  //       setwishListItems(items)
+  //       console.log("wishListItems", wishListItems)
+  //     }
+
+  // }
+
+  const list_products = wishListItems.map((p, index) => {
     return (
       <div>
         <div class="flex flex-wrap lg:flex-row gap-5  mb-4">
@@ -115,38 +111,19 @@ export const Cart = () => {
               </figcaption>
             </figure>
           </div>
-          <div class="">
-            <div class="flex justify-center w-1/5">
-              <span onClick={() => decrementCount(p, index)}>
-                {" "}
-                <i class="fa fa-minus"></i>{" "}
-              </span>
-
-              <input
-                class="mx-2 border text-center w-8"
-                type="text"
-                value={p.quantity}
-              />
-
-              <span onClick={() => incrementCount(p, index)}>
-                {" "}
-                <i class="fa fa-plus"></i>{" "}
-              </span>
-            </div>
-          </div>
+          <div class=""></div>
           <div>
             <div class="leading-5">
-              <p class="font-semibold not-italic">Rs. {p.quantity * p.price}</p>
+              <p class="font-semibold not-italic">{p.price}</p>
             </div>
           </div>
           <div class="flex-auto">
             <div class="float-right">
               <span
-                onClick={() => addToWList(p)}
+                onClick={() => addToCart(p)}
                 class="px-4 py-2 inline-block text-red-600 bg-white shadow-sm border border-gray-200 rounded-md hover:bg-gray-100"
               >
-                {" "}
-                WishList{" "}
+                Add to cart
               </span>
               &nbsp;&nbsp;&nbsp;
               <span
@@ -263,7 +240,7 @@ export const Cart = () => {
 
       <section class="py-5 sm:py-7 bg-blue-100">
         <div class="container max-w-screen-xl mx-auto px-4">
-          <h2 class="text-3xl font-semibold mb-2">Shopping cart</h2>
+          <h2 class="text-3xl font-semibold mb-2">Wishlist</h2>
         </div>
       </section>
 
@@ -273,68 +250,8 @@ export const Cart = () => {
             <main class="md:w-3/4">
               <article class="border border-gray-200 bg-white shadow-sm rounded mb-5 p-3 lg:p-5">
                 {list_products}
-
-                <h6 class="font-bold">Free Delivery within 1-2 weeks</h6>
-                <p class="text-gray-400">
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip
-                </p>
               </article>
             </main>
-            <aside class="md:w-1/4">
-              <article class="border border-gray-200 bg-white shadow-sm rounded mb-5 p-3 lg:p-5">
-                <ul class="mb-5">
-                  <li class="flex justify-between text-gray-600  mb-1">
-                    <span>Total price:</span>
-                    <span>Rs.
-                      {Number(
-                        cartItems.reduce(
-                          (total, item) => total + item.price * item.quantity,
-                          0
-                        )
-                      ).toFixed(2)}
-                    </span>
-                  </li>
-                  <li class="flex justify-between text-gray-600  mb-1">
-                    <span>Discount:</span>
-                    <span class="text-green-500">- 0.00</span>
-                  </li>
-                  <li class="flex justify-between text-gray-600  mb-1">
-                    <span>TAX:</span>
-                    <span>0.00</span>
-                  </li>
-                  <li class="text-lg font-bold border-t flex justify-between mt-3 pt-3">
-                    <span>Total price:</span>
-                    <span>Rs.
-                      {Number(
-                        cartItems.reduce(
-                          (total, item) => total + item.price * item.quantity,
-                          0
-                        )
-                      ).toFixed(2)}
-                    </span>
-                  </li>
-                </ul>
-
-                <a
-                  class="px-4 py-3 mb-2 inline-block text-lg w-full text-center font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
-                  href="/order"
-                >
-                  {" "}
-                  Checkout{" "}
-                </a>
-
-                <a
-                  class="px-4 py-3 inline-block text-lg w-full text-center font-medium text-green-600 bg-white shadow-sm border border-gray-200 rounded-md hover:bg-gray-100"
-                  href="/"
-                >
-                  {" "}
-                  Back to shop{" "}
-                </a>
-              </article>
-            </aside>
           </div>
         </div>
       </section>

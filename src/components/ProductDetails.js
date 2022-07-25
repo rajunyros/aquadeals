@@ -2,38 +2,98 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
-
 export const ProductDetails = () => {
   const [product, setProduct] = useState([]);
+  const [image, setImage] = useState([]);
+  const [images, setImages] = useState([]);
+  const [wcount, setWcount] = useState(null);
+
   const params = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`https://fakestoreapi.com/products/${params.id}`)
-      .then((res) => res.json())
-      .then((json) => {
-        console.log("product",json)
-        setProduct(json);
-      });
-  });
+    if (localStorage.getItem("wishlist")) {
+      const w_count = JSON.parse(localStorage.getItem("wishlist")).length;
+      setWcount(w_count);
+    }
+    fetch("https://62b9503141bf319d22798e67.mockapi.io/products", {
+      mode: "cors",
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    })
+    .then((res) => res.json())
+    .then((json) => {
+      const products = json[0].products;
+      var t = products.filter(function (obj) {
+        return obj.id == params.id;
+      })[0];
+      setProduct(t);
+      setImage(t.image.src);
+      setImages(t.images);
+    });
+  }, []);
 
   const addToCart = (product) => {
-    console.log("sssssssss",product)
-
     let products = [];
-    if(localStorage.getItem('products')){
-        products = JSON.parse(localStorage.getItem('products'));
+    if (localStorage.getItem("products")) {
+      products = JSON.parse(localStorage.getItem("products"));
     }
-    products.push({'id': params.id,'image': product.image,'price': product.price,'title': product.title});
-    localStorage.setItem('products', JSON.stringify(products));
 
-    // alert("hii")
-    navigate({ pathname: "/cart/" })
-    
-  }
+    const ProductExist = products.find((item) => item.id === product.id);
 
+    if (ProductExist) {
+      ProductExist.quantity += 1;
+    } else {
+      products.push({
+        id: product.id,
+        image: product.images[0].src,
+        price: product.variants[0].price,
+        title: product.title,
+        quantity: 1,
+      });
+    }
 
-  
+    localStorage.setItem("products", JSON.stringify(products));
+    navigate({ pathname: "/cart/" });
+  };
+
+  const addToWList = (product) => {
+    let products = [];
+    if (localStorage.getItem("wishlist")) {
+      products = JSON.parse(localStorage.getItem("wishlist"));
+    }
+    const ProductExist = products.find((item) => item.id === product.id);
+
+    if (!ProductExist) {
+      products.push({
+        id: product.id,
+        image: product.images[0].src,
+        price: product.variants[0].price,
+        title: product.title,
+        quantity: 1,
+      });
+    }
+    localStorage.setItem("wishlist", JSON.stringify(products));
+    navigate({ pathname: "/wishlist/" });
+  };
+
+  const imageChange = (p) => {
+    console.log(p.src);
+    setImage(p.src, () => console.log(image));
+  };
+
+  const list_images = images.map((p, index) => {
+    return (
+      <span
+        class="inline-block border border-gray-200 p-1 rounded-md hover:border-blue-500"
+        onClick={() => imageChange(p)}
+      >
+        <img class="w-14 h-14" src={p.src} alt="Product title" />
+      </span>
+    );
+  });
+
   return (
     <div>
       <header class="shadow-sm relative">
@@ -67,62 +127,14 @@ export const ProductDetails = () => {
                   <img
                     class="object-cover inline-block"
                     width="480"
-                    src={product.image}
+                    // src="https://cdn.shopify.com/s/files/1/0268/1382/5101/products/jeans1.jpg?v=1575978285"
+                    src={image}
                     alt="Product title"
                   />
                 </div>
 
                 <div class="space-x-2 overflow-auto text-center whitespace-nowrap">
-                  <a
-                    href="#"
-                    class="inline-block border border-gray-200 p-1 rounded-md hover:border-blue-500"
-                  >
-                    <img
-                      class="w-14 h-14"
-                      src="../images/items/detail/thumb.jpg"
-                      alt="Product title"
-                    />
-                  </a>
-                  <a
-                    href="#"
-                    class="inline-block border border-gray-200 p-1 rounded-md hover:border-blue-500 "
-                  >
-                    <img
-                      class="w-14 h-14 object-cover"
-                      src="../images/items/detail/thumb1.jpg"
-                      alt="Product title"
-                    />
-                  </a>
-                  <a
-                    href="#"
-                    class="inline-block border border-gray-200 p-1 rounded-md hover:border-blue-500"
-                  >
-                    <img
-                      class="w-14 h-14 object-cover"
-                      src="../images/items/detail/thumb2.jpg"
-                      alt="Product title"
-                    />
-                  </a>
-                  <a
-                    href="#"
-                    class="inline-block border border-gray-200 p-1 rounded-md hover:border-blue-500"
-                  >
-                    <img
-                      class="w-14 h-14 object-cover"
-                      src="../images/items/detail/thumb3.jpg"
-                      alt="Product title"
-                    />
-                  </a>
-                  <a
-                    href="#"
-                    class="inline-block border border-gray-200 p-1 rounded-md hover:border-blue-500"
-                  >
-                    <img
-                      class="w-14 h-14 object-cover"
-                      src="../images/items/detail/thumb4.jpg"
-                      alt="Product title"
-                    />
-                  </a>
+                  {list_images}
                 </div>
               </aside>
               <main>
@@ -134,7 +146,10 @@ export const ProductDetails = () => {
                     src="../images/misc/stars-active.svg"
                     alt="Rating"
                   />
-                  <span class="text-yellow-500">{product.rating? product.rating.rate:0} ({product.rating? product.rating.count:null})</span>
+                  <span class="text-yellow-500">
+                    {product.rating ? product.rating.rate : 0} (
+                    {product.rating ? product.rating.count : null})
+                  </span>
 
                   <svg
                     width="6px"
@@ -162,13 +177,11 @@ export const ProductDetails = () => {
                 </div>
 
                 <p class="mb-4 font-semibold text-xl">
-                  &#8377; {product.price}
+                  {/*&#8377; {product.variants[0].price}*/}
                   <span class="text-base font-normal">/1 box</span>
                 </p>
 
-                <p class="mb-4 text-gray-500">
-                  {product.description}
-                </p>
+                <p class="mb-4 text-gray-500">{product.description}</p>
 
                 <ul class="mb-5">
                   <li class="mb-1">
@@ -254,21 +267,20 @@ export const ProductDetails = () => {
                     Buy now
                   </a>
 
-                  <div 
+                  <div
                     class="px-4 py-2 inline-block text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-                onClick={() => addToCart(product)}
+                    onClick={() => addToCart(product)}
                   >
                     <i class="fa fa-shopping-cart mr-2"></i>
                     Add to cart
                   </div>
 
-                  <a
-                    class="px-4 py-2 inline-block text-blue-600 border border-gray-300 rounded-md hover:bg-gray-100"
-                    href="#"
+                  <span
+                    onClick={() => addToWList(product)}
+                    class="cursor-pointer px-3 py-2 inline-block text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
                   >
-                    <i class="fa fa-heart mr-2"></i>
-                    Save for later
-                  </a>
+                    <i class="fa fa-heart"></i>
+                  </span>
                 </div>
                 {/*<!-- action buttons end -->*/}
               </main>
