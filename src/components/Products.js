@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Carousel } from "antd";
+import usePageBottom from "./usePageBottom";
+import ScrollButton from './ScrollButton'; 
+import { Content, Header } from './Styles'; 
+
+
 
 export const Products = () => {
   const [allproducts, setallProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [wcount, setWcount] = useState(null);
   const navigate = useNavigate();
+
+  const reachedBottom = usePageBottom();
+console.log("reachedBottom", reachedBottom);
 
   useEffect(() => {
     if (localStorage.getItem("wishlist")) {
@@ -259,6 +267,8 @@ export const Products = () => {
       {/*<!--  COMPONENT: HEADER //END -->*/}
       {/*<!--  INTRO SECTION  -->*/}
       <section class="bg bg-blue-500">
+                            <ScrollButton /> 
+
         <div class="container max-w-screen-xl mx-auto px-4">
           <div class="pl-5 py-10 sm:py-20">
             <article class="my-10">
@@ -292,10 +302,12 @@ export const Products = () => {
 
       {/*<!-- SECTION-CONTENT -->*/}
       <section class="bg-gray-100 py-12">
+
         <div class="container max-w-screen-xl mx-auto px-4">
           <h2 class="text-3xl font-bold mb-8">New products</h2>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
             {list_products}
           </div>
         </div>

@@ -1,12 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState , useReducer } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import FirstComponent from './FirstComponent';
+import SecondComponent from './SecondComponent';
+
+
+const initialState = 0;
+const reducer = (state, action) => {
+  switch (action) {
+    case "add":
+      return state + 1;
+    case "subtract":
+      return state - 1;
+    case "reset":
+      return 0;
+    default:
+      throw new Error("Unexpected action");
+  }
+};
+
 
 
 export const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [wcount, setWcount] = useState(null);
   const navigate = useNavigate();
+
+  const [count, dispatch] = useReducer(reducer, initialState);
+
+  
 
 
   useEffect(() => {
@@ -265,7 +287,30 @@ export const Cart = () => {
         <div class="container max-w-screen-xl mx-auto px-4">
           <h2 class="text-3xl font-semibold mb-2">Shopping cart</h2>
         </div>
+        <FirstComponent />
+        <SecondComponent />
+
+
+
+
+<br/><br/>
+
+        <div>
+        <h3>useReducer()</h3>
+      <h2>{count}</h2>
+      <button onClick={() => dispatch("add")}>
+        add
+      </button> &nbsp;&nbsp;
+      <button onClick={() => dispatch("subtract")}>
+        subtract
+      </button>&nbsp;&nbsp;
+      <button onClick={() => dispatch("reset")}>
+        reset
+      </button>
+    </div>
+
       </section>
+
 
       <section class="py-10">
         <div class="container max-w-screen-xl mx-auto px-4">
