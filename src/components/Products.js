@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Carousel } from "antd";
-import usePageBottom from "./usePageBottom";
-import ScrollButton from './ScrollButton'; 
-import { Content, Header } from './Styles'; 
+import usePageBottom from "./hooks/usePageBottom";
+import ScrollButton from './hooks/useScrollButton'; 
+// import { Content, Header } from './Styles'; 
 
 
 
@@ -296,6 +296,7 @@ console.log("reachedBottom", reachedBottom);
             </article>
           </div>
         </div>
+       
         {/*<!-- container end -->*/}
       </section>
       {/*<!--  INTRO SECTION END -->*/}

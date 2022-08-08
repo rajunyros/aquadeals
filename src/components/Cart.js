@@ -1,23 +1,48 @@
 import React, { useEffect, useState , useReducer } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import FirstComponent from './FirstComponent';
-import SecondComponent from './SecondComponent';
+import displayRazorpay from "./PaymentGateway";
 
 
-const initialState = 0;
-const reducer = (state, action) => {
-  switch (action) {
-    case "add":
-      return state + 1;
-    case "subtract":
-      return state - 1;
-    case "reset":
-      return 0;
-    default:
-      throw new Error("Unexpected action");
-  }
-};
+
+// const items = []
+//  if (localStorage.getItem("cart")) {
+//     items = JSON.parse(localStorage.getItem("cart"));
+
+//     }
+// const initialState = {cart:items};
+
+// const reducer = (state, action) => {
+//   const { type, payload } = action;
+//   const items = [...state.cart];
+//   switch (type) {
+//     case "add":
+//     let a = action.item.quantity
+//     console.log("AAAAA", a)
+      
+//       action.item.quantity += 1;
+//       items.splice(action.index, 1, action.item);
+//       return {
+//         ...state,
+//         cart: items
+//       };
+//             break;
+
+//     case "subtract":
+//      if (action.item.quantity > 1) {
+//       action.item.quantity -= 1;
+//       items.splice(action.index, 1, action.item);
+//     }
+//       return {
+//         ...state,
+//         cart: items
+//       };
+//     case "reset":
+//       return {cart: state.cart.quantity = 0}
+//     default:
+//       throw new Error("Unexpected action");
+//   }
+// };
 
 
 
@@ -26,10 +51,7 @@ export const Cart = () => {
   const [wcount, setWcount] = useState(null);
   const navigate = useNavigate();
 
-  const [count, dispatch] = useReducer(reducer, initialState);
-
-  
-
+  // const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
     if (localStorage.getItem("wishlist")) {
@@ -41,6 +63,10 @@ export const Cart = () => {
       const cart = JSON.parse(localStorage.getItem("cart"));
       setCartItems(cart);
     }
+
+    localStorage.setItem("user", JSON.stringify({"Id":1234,"user": "raju", "mobile": 9502458428,"email": "rajurekadi7@gmail.com"}))
+
+
   }, []);
 
   const removeProduct = (_product) => {
@@ -61,12 +87,14 @@ export const Cart = () => {
   };
 
   const incrementCount = (item, index) => {
+        console.log("cartItems", item,index);
+
     const items = [...cartItems];
     item.quantity += 1;
     items.splice(index, 1, item);
     localStorage.setItem("cart", JSON.stringify(items));
     setCartItems(items);
-    console.log("cartItems", cartItems);
+
   };
 
   const decrementCount = (item, index) => {
@@ -140,6 +168,7 @@ export const Cart = () => {
           <div class="">
             <div class="flex justify-center w-1/5">
               <span onClick={() => decrementCount(p, index)}>
+              {/*<span onClick={() => dispatch({ type: 'subtract',index:index,item:p})}>*/}
                 {" "}
                 <i class="fa fa-minus"></i>{" "}
               </span>
@@ -151,6 +180,8 @@ export const Cart = () => {
               />
 
               <span onClick={() => incrementCount(p, index)}>
+                            {/*<span onClick={() => dispatch({ type: 'add',index:index,item:p})}>*/}
+
                 {" "}
                 <i class="fa fa-plus"></i>{" "}
               </span>
@@ -158,7 +189,7 @@ export const Cart = () => {
           </div>
           <div>
             <div class="leading-5">
-              <p class="font-semibold not-italic">Rs. {p.quantity * p.price}</p>
+              <p class="font-semibold not-italic">Rs. {Number(p.quantity * p.price).toFixed(2)}</p>
             </div>
           </div>
           <div class="flex-auto">
@@ -287,27 +318,17 @@ export const Cart = () => {
         <div class="container max-w-screen-xl mx-auto px-4">
           <h2 class="text-3xl font-semibold mb-2">Shopping cart</h2>
         </div>
-        <FirstComponent />
-        <SecondComponent />
+      
 
 
 
-
-<br/><br/>
+{/*<br/><br/>
 
         <div>
         <h3>useReducer()</h3>
-      <h2>{count}</h2>
-      <button onClick={() => dispatch("add")}>
-        add
-      </button> &nbsp;&nbsp;
-      <button onClick={() => dispatch("subtract")}>
-        subtract
-      </button>&nbsp;&nbsp;
-      <button onClick={() => dispatch("reset")}>
-        reset
-      </button>
-    </div>
+      <h2>{JSON.stringify(state)}</h2>
+     
+    </div>*/}
 
       </section>
 
@@ -365,7 +386,8 @@ export const Cart = () => {
 
                 <a
                   class="px-4 py-3 mb-2 inline-block text-lg w-full text-center font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
-                  href="/order"
+                   href="/order"
+                            // onClick={displayRazorpay}
                 >
                   {" "}
                   Checkout{" "}

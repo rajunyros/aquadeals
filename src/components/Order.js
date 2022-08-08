@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import displayRazorpay from "./PaymentGateway";
+
+import { Formik, Form, Field, ErrorMessage } from "formik";
 
 export const Order = () => {
   const [cartItems, setCartItems] = useState([]);
+  const [user, setUser] = useState([]);
+  const [userAddress, setUserAddress] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [defaultAddress,setDefaultAddress] = useState(null)
+
   const [wcount, setWcount] = useState(null);
   const navigate = useNavigate();
 
@@ -17,18 +25,42 @@ export const Order = () => {
       const cart = JSON.parse(localStorage.getItem("cart"));
       setCartItems(cart);
     }
+    if (localStorage.getItem("user")) {
+      const userData = JSON.parse(localStorage.getItem("user"));
+      setUser(userData);
+    }
+    if (localStorage.getItem("user_addresses")) {
+      const userAddress = JSON.parse(localStorage.getItem("user_addresses"));
+      setUserAddress(userAddress);
+    }
   }, []);
 
-  const removeProduct = (_product) => {
-    let productId = _product.id;
-    let storageProducts = JSON.parse(localStorage.getItem("cart"));
-    let products = storageProducts.filter(
-      (product) => product.id !== productId
-    );
-    localStorage.setItem("cart", JSON.stringify(products));
-    const cart = JSON.parse(localStorage.getItem("cart"));
-    setCartItems(cart);
+  const removeAddress = (id) => {
+    let storageAddresses = JSON.parse(localStorage.getItem("user_addresses"));
+    let addresses = storageAddresses.filter((a) => a.Id !== id);
+    localStorage.setItem("user_addresses", JSON.stringify(addresses));
+    const addr = JSON.parse(localStorage.getItem("user_addresses"));
+    setUserAddress(addr);
   };
+
+  const selectAddress = (id) => {
+          let addresses = [];
+          if (localStorage.getItem("user_addresses")) {
+            addresses = JSON.parse(localStorage.getItem("user_addresses"));
+            addresses.map(a=>a.default = false);
+          }
+
+          const address =  addresses.find(a => a.Id === id);
+          if(address){
+            address.default = true;
+          }
+
+
+         localStorage.setItem("user_addresses", JSON.stringify(addresses));
+          const addr = JSON.parse(localStorage.getItem("user_addresses"));
+          setUserAddress(addr);
+
+  }
 
   const totalPrice = () => {
     const countTotal = (items) =>
@@ -86,6 +118,203 @@ export const Order = () => {
 
     localStorage.setItem("wishlist", JSON.stringify(products));
     navigate({ pathname: "/wishlist/" });
+  };
+
+  const validateInput = () => {
+    alert("Hii");
+  };
+
+  const showForm1 = () => {
+    return (
+      <Formik
+        initialValues={{
+          house: "",
+          building: "",
+          pincode: "",
+          other: "",
+          address: "",
+          city: "",
+        }}
+        validate={(values) => {
+          const errors = {};
+          if (!values.pincode) {
+            errors.pincode = "Required";
+          }
+          // else if (
+          //   !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(
+          //     values.pincode
+          //   )
+          // ) {
+          //   errors.pincode = "Invalid Pincode";
+          // }
+          return errors;
+        }}
+        onSubmit={(values, { setSubmitting, resetForm }) => {
+          // console.log(user.Id, "Address", values);
+          values.user_id = user.Id;
+          values.Id = (new Date().getTime()).toString(36) + new Date().getUTCMilliseconds()
+          values.default = true;
+          setSubmitting(false);
+
+          let addresses = [];
+          if (localStorage.getItem("user_addresses")) {
+            addresses = JSON.parse(localStorage.getItem("user_addresses"));
+            addresses.map(a=>a.default = false);
+          }
+
+          addresses.push(values);
+          localStorage.setItem("user_addresses", JSON.stringify(addresses));
+          setUserAddress(addresses);
+          resetForm();
+          setShowForm(false);
+        }}
+      >
+        {({
+          values,
+          errors,
+          touched,
+          handleChange,
+          handleBlur,
+          handleSubmit,
+          isSubmitting,
+          /* and other goodies */
+        }) => (
+          <form onSubmit={handleSubmit}>
+            {/*  <h2 class="text-xl font-semibold mb-5">
+                        Shipping information
+                      </h2>
+                      <div class="grid sm:grid-cols-3 gap-3 mb-6">
+                        <label class="flex p-3 border border-gray-200 rounded-md bg-gray-50 hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
+                          <span>
+                            <input
+                              name="shipping"
+                              type="radio"
+                              class="h-4 w-4 mt-1"
+                            />
+                          </span>
+                          <p class="ml-2">
+                            <span>Express delivery</span>
+                            <small class="block text-sm text-gray-400">
+                              3-4 days via Fedex
+                            </small>
+                          </p>
+                        </label>
+                        <label class="flex p-3 border border-gray-200 rounded-md bg-gray-50 hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
+                          <span>
+                            <input
+                              name="shipping"
+                              type="radio"
+                              class="h-4 w-4 mt-1"
+                            />
+                          </span>
+                          <p class="ml-2">
+                            <span>Post office</span>
+                            <small class="block text-sm text-gray-400">
+                              20-30 days via post
+                            </small>
+                          </p>
+                        </label>
+                        <label class="flex p-3 border border-gray-200 rounded-md bg-gray-50 hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
+                          <span>
+                            <input
+                              name="shipping"
+                              type="radio"
+                              class="h-4 w-4 mt-1"
+                            />
+                          </span>
+                          <p class="ml-2">
+                            <span>Self pick-up</span>
+                            <small class="block text-sm text-gray-400">
+                              Nearest location
+                            </small>
+                          </p>
+                        </label>
+                      </div>*/}
+
+            <div class="grid md:grid-cols-3 gap-x-3">
+              <div class="mb-4 md:col-span-2">
+                <label class="block mb-1"> Address* </label>
+                <Field
+                  class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
+                  type="text"
+                  name="address"
+                />
+                <ErrorMessage name="address" component="div" />
+              </div>
+
+              <div class="mb-4 md:col-span-1">
+                <label class="block mb-1"> City* </label>
+                <Field
+                  class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
+                  type="text"
+                  name="city"
+                />
+                <ErrorMessage name="city" component="div" />
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-x-3">
+              <div class="mb-4 md:col-span-1">
+                <label class="block mb-1"> House </label>
+                <Field
+                  class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
+                  type="text"
+                  name="house"
+                />
+                <ErrorMessage name="house" component="div" />
+              </div>
+
+              <div class="mb-4 md:col-span-1">
+                <label class="block mb-1"> Building </label>
+                <Field
+                  class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
+                  type="text"
+                  name="building"
+                />
+                <ErrorMessage name="building" component="div" />
+              </div>
+
+              <div class="mb-4 md:col-span-1">
+                <label class="block mb-1"> Pincode </label>
+                <Field
+                  class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
+                  type="text"
+                  name="pincode"
+                />
+                <ErrorMessage name="pincode" component="div" />
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="block mb-1"> Other info </label>
+              <Field
+                class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
+                type="text"
+                name="other"
+              />
+              <ErrorMessage name="other" component="div" />
+            </div>
+
+            <div class="flex justify-end space-x-2">
+              <a
+                class="px-5 py-2 inline-block text-gray-700 bg-white shadow-sm border border-gray-200 rounded-md hover:bg-gray-100 hover:text-blue-600 cursor-pointer"
+                onClick={() => setShowForm(false)}
+              >
+                {" "}
+                Cancel{" "}
+              </a>
+
+              <button
+                class="px-5 py-2 inline-block text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
+                type="submit"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        )}
+      </Formik>
+    );
   };
 
   const list_products = cartItems.map((p, index) => {
@@ -259,9 +488,10 @@ export const Order = () => {
               </article>
 
               <article class="border border-gray-200 bg-white shadow-sm rounded p-4 lg:p-6 mb-5">
-                <h2 class="text-xl font-semibold mb-5">Guest checkout</h2>
+                           <h2 class="text-xl font-semibold mb-5">Select Delivery Address</h2>
 
-                <div class="grid grid-cols-2 gap-x-3">
+                {/*<h2 class="text-xl font-semibold mb-5">Guest checkout</h2>*/}
+                {/*  <div class="grid grid-cols-2 gap-x-3">
                   <div class="mb-4">
                     <label class="block mb-1"> First name </label>
                     <input
@@ -316,152 +546,49 @@ export const Order = () => {
                     I agree with Terms and Conditions{" "}
                   </span>
                 </label>
-
-                <hr class="my-4" />
-
-                <h2 class="text-xl font-semibold mb-5">Shipping information</h2>
-
-                <div class="grid sm:grid-cols-3 gap-3 mb-6">
-                  <label class="flex p-3 border border-gray-200 rounded-md bg-gray-50 hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
-                    <span>
-                      <input
-                        name="shipping"
-                        type="radio"
-                        class="h-4 w-4 mt-1"
-                      />
-                    </span>
-                    <p class="ml-2">
-                      <span>Express delivery</span>
-                      <small class="block text-sm text-gray-400">
-                        3-4 days via Fedex
-                      </small>
-                    </p>
-                  </label>
-                  <label class="flex p-3 border border-gray-200 rounded-md bg-gray-50 hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
-                    <span>
-                      <input
-                        name="shipping"
-                        type="radio"
-                        class="h-4 w-4 mt-1"
-                      />
-                    </span>
-                    <p class="ml-2">
-                      <span>Post office</span>
-                      <small class="block text-sm text-gray-400">
-                        20-30 days via post
-                      </small>
-                    </p>
-                  </label>
-                  <label class="flex p-3 border border-gray-200 rounded-md bg-gray-50 hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
-                    <span>
-                      <input
-                        name="shipping"
-                        type="radio"
-                        class="h-4 w-4 mt-1"
-                      />
-                    </span>
-                    <p class="ml-2">
-                      <span>Self pick-up</span>
-                      <small class="block text-sm text-gray-400">
-                        Nearest location
-                      </small>
-                    </p>
-                  </label>
-                </div>
-
-                <div class="grid md:grid-cols-3 gap-x-3">
-                  <div class="mb-4 md:col-span-2">
-                    <label class="block mb-1"> Address* </label>
-                    <input
-                      class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
-                      type="text"
-                      placeholder="Type here"
-                    />
-                  </div>
-
-                  <div class="mb-4 md:col-span-1">
-                    <label class="block mb-1"> City* </label>
-                    <div class="relative">
-                      <select class="block appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full">
-                        <option>Select here</option>
-                        <option>Second option</option>
-                        <option>Third option</option>
-                      </select>
-                      <i class="absolute inset-y-0 right-0 p-2 text-gray-400">
-                        <svg
-                          width="22"
-                          height="22"
-                          class="fill-current"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M7 10l5 5 5-5H7z" />
-                        </svg>
-                      </i>
+                <hr class="my-4" />*/}
+                <div class="grid grid-cols-3 gap-2">
+                  <div
+                    class="max-w-xs rounded overflow-hidden shadow-lg cursor-pointer"
+                    onClick={() => setShowForm(true)}
+                  >
+                    <div class="p-24">
+                      <div class="font-bold text-xl mb-2"></div>
+                      <p class="text-gray-700 text-base flex items-center">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                        Add New{" "}
+                      </p>
                     </div>
                   </div>
-                </div>
 
-                <div class="grid md:grid-cols-3 gap-x-3">
-                  <div class="mb-4 md:col-span-1">
-                    <label class="block mb-1"> House </label>
-                    <input
-                      class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
-                      type="text"
-                      placeholder="Type here"
-                    />
-                  </div>
-
-                  <div class="mb-4 md:col-span-1">
-                    <label class="block mb-1"> Building </label>
-                    <input
-                      class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
-                      type="text"
-                      placeholder="Type here"
-                    />
-                  </div>
-
-                  <div class="mb-4 md:col-span-1">
-                    <label class="block mb-1"> ZIP code </label>
-                    <input
-                      class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
-                      type="text"
-                      placeholder="Type here"
-                    />
-                  </div>
-                </div>
-
-                <div class="mb-4">
-                  <label class="block mb-1"> Other info </label>
-                  <textarea
-                    placeholder="Type your wishes"
-                    class="appearance-none border border-gray-200 bg-gray-100 rounded-md py-2 px-3 hover:border-gray-400 focus:outline-none focus:border-gray-400 w-full"
-                  ></textarea>
-                </div>
-
-                <label class="flex items-center w-max my-4">
-                  <input checked="" name="" type="checkbox" class="h-4 w-4" />
-                  <span class="ml-2 inline-block text-gray-500">
-                    {" "}
-                    Save my information for future purchase{" "}
-                  </span>
-                </label>
-
-                <div class="flex justify-end space-x-2">
-                  <a
-                    class="px-5 py-2 inline-block text-gray-700 bg-white shadow-sm border border-gray-200 rounded-md hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    {" "}
-                    Back{" "}
-                  </a>
-                  <a
-                    class="px-5 py-2 inline-block text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
-                    href="#"
-                  >
-                    {" "}
-                    Continue{" "}
-                  </a>
-                </div>
+                  {userAddress.map((a, idx) => (
+                    <div class="max-w-xs rounded overflow-hidden shadow-lg cursor-pointer" style={{backgroundColor: a.default?'#48bda8':null}}  onClick={() => selectAddress(a.Id)}>
+                      <div class="px-7 py-7">
+                        <div class="font-bold text-xl mb-2">{a.address}</div>
+                        <p class="text-gray-700 text-base">
+                          D.No : {a.house} <br />
+                          Building : {a.building}
+                          <br />
+                          City : {a.city}
+                          <br />
+                          Pincode : {a.pincode}
+                          <br />
+                          Notes : {a.other}
+                        </p>{" "}
+                        <br />
+                        <span
+                          class="px-4 py-2 inline-block text-red-600 bg-white shadow-sm border border-gray-200 rounded-md hover:bg-gray-100"
+                          onClick={() => removeAddress(a.Id)}
+                        >
+                          {" "}
+                          Remove{" "}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>{" "}
+                <br />
+                {showForm ? showForm1() : null}
               </article>
             </main>
             <aside class="md:w-1/3">
@@ -471,7 +598,8 @@ export const Order = () => {
                 <ul class="mb-5">
                   <li class="flex justify-between text-gray-600  mb-1">
                     <span>Total price:</span>
-                    <span>Rs.
+                    <span>
+                      Rs.
                       {Number(
                         cartItems.reduce(
                           (total, item) => total + item.price * item.quantity,
@@ -490,7 +618,8 @@ export const Order = () => {
                   </li>
                   <li class="text-lg font-bold border-t flex justify-between mt-3 pt-3">
                     <span>Total price:</span>
-                    <span>Rs.
+                    <span>
+                      Rs.
                       {Number(
                         cartItems.reduce(
                           (total, item) => total + item.price * item.quantity,
@@ -523,6 +652,19 @@ export const Order = () => {
 
                 {list_products}
               </article>
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
+
+              <a
+                class="px-5 py-2 inline-block text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 cursor-pointer"
+                onClick={displayRazorpay}
+              >
+                {" "}
+                Continue{" "}
+              </a>
             </aside>
           </div>
         </div>

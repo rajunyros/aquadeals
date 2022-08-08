@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import usePageBottom from "./hooks/usePageBottom";
+import ScrollButton from './hooks/useScrollButton'; 
 
 export const ProductDetails = () => {
   const [product, setProduct] = useState([]);
@@ -118,6 +120,8 @@ export const ProductDetails = () => {
       </header>
 
       <section class="bg-gray-50 py-10">
+                                  <ScrollButton /> 
+
         <div class="container max-w-screen-xl mx-auto px-4">
           {/*<!-- card -->*/}
           <div class="bg-white border border-gray-200 shadow-sm rounded mb-5 p-4 lg:p-8">
